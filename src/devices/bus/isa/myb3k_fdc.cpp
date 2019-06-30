@@ -303,7 +303,7 @@ READ8_MEMBER( isa8_myb3k_fdc471x_device_base::myb3k_fdc_status )
 
 READ8_MEMBER( isa8_myb3k_fdc4712_device::myb3k_fdc_status )
 {
-	uint8_t status = isa8_myb3k_fdc471x_device_base::myb3k_fdc_status(space, offset, mem_mask);
+	uint8_t status = isa8_myb3k_fdc471x_device_base::myb3k_fdc_status(space, offset, mem_mask) | FDC_STATUS_UNKNOWN_1 | FDC_STATUS_UNKNOWN_2;
 
 	auto floppy_connector = m_floppy_connectors[selected_drive];
 	floppy_image_device *floppy = nullptr;
@@ -311,8 +311,15 @@ READ8_MEMBER( isa8_myb3k_fdc4712_device::myb3k_fdc_status )
 	if (floppy_connector.found())
 		floppy = floppy_connector->get_device();
 
-	if (floppy != nullptr && !floppy->twosid_r())
-		status |= FDC_STATUS_DOUBLE_SIDED;
+	if (floppy != nullptr)
+	{
+		if (!floppy->dskchg_r())
+			status |= FDC_STATUS_DISK_CHANGED;
+
+		if (!floppy->twosid_r())
+			status |= FDC_STATUS_DOUBLE_SIDED;
+	}
+		
 
 	return status;
 }
